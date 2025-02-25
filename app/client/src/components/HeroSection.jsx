@@ -35,12 +35,6 @@ const HeroSection = () => {
 
   return (
     <div className="relative min-h-screen bg-black overflow-hidden flex flex-col items-center justify-center px-4">
-      {/* Background */}
-      <div className="absolute inset-0">
-        <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-purple-600/20 animate-gradient" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,0,0,0)_0%,rgba(0,0,0,0.9)_100%)]" />
-      </div>
-
       {/* Text Content */}
       <div className="relative z-10 text-center flex flex-col justify-center items-center" style={{ perspective: '1000px' }}>
         <h1 className="text-5xl sm:text-7xl md:text-8xl lg:text-[8rem] xl:text-[10rem] font-bold tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-purple-500 glow-text transition-all duration-300 leading-tight">

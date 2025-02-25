@@ -7,24 +7,32 @@ import HeroSection from "./components/HeroSection";
 import CTAButtons from "./components/CTAButtons";
 import ChatPage from "./components/pages/ChatPage";
 import { WelcomeMessage } from "./components/chat/WelcomeMessage";
-import AuthModal from "./components/auth/AuthModal"; // ✅ Ensure AuthModal is globally available
-// Protected Route Component
+import AuthModal from "./components/auth/AuthModal";
+import Footer from "./components/pages/Footer";
+import NotFound from "./components/pages/NotFound";
+import Blog from "./components/pages/Blog";
+import Resources from "./components/pages/Resources";
+import Contact from "./components/pages/Contact";
+import AboutUs from "./components/pages/AboutUs";
+import VisionSection from "./components/pages/VisionSection";
+
 const ProtectedRoute = ({ children }) => {
   const { user } = useAuth();
   
   if (!user) {
     return <Navigate to="/" replace />;
   }
-
+  
   return children;
 };
 
 // App Layout Component
-const AppLayout = ({ children, showNavbar = true }) => {
+const AppLayout = ({ children, showNavbar = true, showFooter = true }) => {
   return (
     <>
       {showNavbar && <Navbar />}
       {children}
+      {showFooter && <Footer />}
     </>
   );
 };
@@ -33,37 +41,65 @@ function App() {
   return (
     <Router>
       <AuthProvider>
-        {/* ✅ AuthModal is now globally accessible */}
-        <AuthModal />  
-
+        <AuthModal />
         <Routes>
           {/* Public Routes */}
-          <Route 
-            path="/" 
+          <Route
+            path="/"
             element={
               <AppLayout>
                 <HeroSection />
                 <CTAButtons />
+                <AboutUs />
+                <VisionSection />
               </AppLayout>
-            } 
+            }
           />
-          <Route 
-            path="/chat" 
-            element={<ChatPage />} // ✅ No need for ProtectedRoute, auth handled inside ChatPage
+          <Route
+            path="/chat"
+            element={
+              <AppLayout showFooter={false}>
+                <ChatPage />
+              </AppLayout>
+            }
           />
-          <Route 
-            path="/welcome" 
+          <Route
+            path="/blog"
+            element={
+              <AppLayout>
+                <Blog />
+              </AppLayout>
+            }
+          />
+          <Route
+            path="/resources"
+            element={
+              <AppLayout>
+                <Resources />
+              </AppLayout>
+            }
+          />
+          <Route
+            path="/contact"
+            element={
+              <AppLayout>
+                <Contact />
+              </AppLayout>
+            }
+          />
+          <Route
+            path="/welcome"
             element={
               <ProtectedRoute>
                 <AppLayout>
                   <WelcomeMessage />
                 </AppLayout>
               </ProtectedRoute>
-            } 
+            }
           />
-
+          
           {/* Catch-all Route */}
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="*" element={<AppLayout><NotFound /></AppLayout>} />
         </Routes>
       </AuthProvider>
     </Router>
