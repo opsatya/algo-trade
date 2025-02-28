@@ -3,8 +3,6 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-d
 import { AuthProvider } from "./components/auth/AuthContext";
 import { useAuth } from "./components/hooks/useAuth";
 import Navbar from "./components/Navbar";
-import HeroSection from "./components/HeroSection";
-import CTAButtons from "./components/CTAButtons";
 import ChatPage from "./components/pages/ChatPage";
 import { WelcomeMessage } from "./components/chat/WelcomeMessage";
 import AuthModal from "./components/auth/AuthModal";
@@ -15,7 +13,7 @@ import Resources from "./components/pages/Resources";
 import Contact from "./components/pages/Contact";
 import AboutUs from "./components/pages/AboutUs";
 import VisionSection from "./components/pages/VisionSection";
-
+import HomePage from "./components/pages/HomePage";
 const ProtectedRoute = ({ children }) => {
   const { user } = useAuth();
   
@@ -48,8 +46,7 @@ function App() {
             path="/"
             element={
               <AppLayout>
-                <HeroSection />
-                <CTAButtons />
+                <HomePage />
                 <AboutUs />
                 <VisionSection />
               </AppLayout>

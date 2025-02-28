@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Mail, Lock, User } from 'lucide-react';
+import { Mail, Lock, User, ArrowLeft } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import Button from '../ui/Button';
 
@@ -32,12 +32,29 @@ const AuthModal = () => {
     setIsAuthModalOpen(false);
   };
 
+  const handleBack = () => {
+    if (showOTPInput) {
+      setShowOTPInput(false);
+    } else {
+      setIsAuthModalOpen(false);
+    }
+  };
+
   if (!isAuthModalOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-      <div className="bg-black/90 p-8 rounded-2xl border border-white/10 w-full max-w-md">
-        <h2 className="text-2xl font-bold text-white mb-6">
+      <div className="bg-black/90 p-8 rounded-2xl border border-white/10 w-full max-w-md relative">
+        {/* Back button */}
+        <button 
+          onClick={handleBack}
+          className="absolute top-4 left-4 text-gray-400 hover:text-white cursor-pointer"
+          aria-label="Go back"
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </button>
+
+        <h2 className="text-2xl font-bold text-white mb-6 text-center">
           {showOTPInput ? 'Enter OTP' : authMode === 'login' ? 'Sign In' : 'Sign Up'}
         </h2>
 
@@ -152,7 +169,7 @@ const AuthModal = () => {
               <button
                 type="button"
                 onClick={() => setAuthMode(authMode === 'login' ? 'signup' : 'login')}
-                className="ml-2 text-violet-500 hover:text-violet-400"
+                className="ml-2 text-violet-500 hover:text-violet-400 cursor-pointer"
               >
                 {authMode === 'login' ? 'Sign Up' : 'Sign In'}
               </button>
@@ -164,4 +181,4 @@ const AuthModal = () => {
   );
 };
 
-export default AuthModal; 
+export default AuthModal;
