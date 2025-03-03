@@ -208,8 +208,8 @@ const AuthModal = () => {
                 type="text"
                 value={otp}
                 onChange={(e) => {
-                  // Only allow digits
-                  const value = e.target.value.replace(/\D/g, '');
+                  
+                  const value = e.target.value.replace(/[^0-9]/g, '');  
                   if (value.length <= 6) setOTP(value);
                 }}
                 className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-violet-500/50"

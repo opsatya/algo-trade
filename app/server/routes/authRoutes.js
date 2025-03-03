@@ -46,39 +46,55 @@ router.post('/signup', async (req, res) => {
     }
 });
 
-// Verify OTP
 router.post('/verify-otp', async (req, res) => {
     try {
         const { email, otp } = req.body;
-
-        const otpRecord = await OTP.findOne({ email, otp });
-
+        
+        // Add logging to debug
+        console.log(`Verifying: Email=${email}, OTP=${otp}`);
+        
+        // Convert OTP to string to ensure consistent comparison
+        const otpString = otp.toString().trim();
+        
+        // First find by email to check if any OTP exists for this user
+        const otpRecord = await OTP.findOne({ email });
+        
         if (!otpRecord) {
+            console.log(`No OTP found for email: ${email}`);
             return res.status(400).json({ success: false, message: 'Invalid or expired OTP' });
         }
-
+        
+        console.log(`Found OTP record: ${otpRecord.otp}`);
+        
+        // Explicitly compare the OTPs
+        if (otpRecord.otp !== otpString) {
+            console.log(`OTP mismatch: Expected=${otpRecord.otp}, Received=${otpString}`);
+            return res.status(400).json({ success: false, message: 'Invalid OTP' });
+        }
+        
+        // Continue with the rest of your code for successful verification
         const user = await User.findByIdAndUpdate(otpRecord.userId, { isVerified: true }, { new: true });
-
+        
         await OTP.deleteOne({ _id: otpRecord._id });
-
+        
         // Generate token for auto-login after verification
         const token = jwt.sign(
             { userId: user._id },
             process.env.JWT_SECRET,
             { expiresIn: '7d' }
         );
-
+        
         res.cookie('token', token, {
             httpOnly: true,
             maxAge: 7 * 24 * 60 * 60 * 1000,
             sameSite: 'strict',
             secure: process.env.NODE_ENV === 'production'
         });
-
+        
         return res.status(200).json({ 
             success: true, 
             message: 'Email verified successfully',
-            token, // Send token for frontend to store if needed
+            token,
             user: {
                 id: user._id,
                 username: user.username,
@@ -191,7 +207,7 @@ router.post('/signin', async (req, res) => {
 });
 
 // Get current user
-router.get('/me', authenticate, (req, res) => {
+router.get('/api.auth/me', authenticate, (req, res) => {
     return res.status(200).json({
         success: true,
         user: {
@@ -203,7 +219,7 @@ router.get('/me', authenticate, (req, res) => {
 });
 
 // Logout
-router.post('/logout', (req, res) => {
+router.post('api/auth/logout', (req, res) => {
     res.clearCookie('token');
     return res.status(200).json({ success: true, message: 'Logout successful' });
 });
