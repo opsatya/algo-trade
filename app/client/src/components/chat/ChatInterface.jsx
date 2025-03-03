@@ -1,18 +1,39 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Send, Bot, Lock } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import Button from "../ui/Button";
+import axios from "axios";
 
 export const ChatInterface = () => {
-  const { user, setIsAuthModalOpen, setAuthMode } = useAuth(); 
+  const { user, setIsAuthModalOpen, setAuthMode } = useAuth();
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [typedPlaceholder, setTypedPlaceholder] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const messagesEndRef = useRef(null);
+  
   const fullPlaceholder = user 
     ? "Ask anything about trading..." 
     : "Sign in to start chatting...";
 
   useEffect(() => {
+    // Get chat history from API when user logs in
+    const fetchChatHistory = async () => {
+      if (user) {
+        try {
+          const response = await axios.get('/api/chat/history');
+          setMessages(response.data.messages || []);
+        } catch (error) {
+          console.error('Error fetching chat history:', error);
+        }
+      }
+    };
+    
+    fetchChatHistory();
+  }, [user]);
+
+  useEffect(() => {
+    // Animate placeholder text
     let index = 0;
     const interval = setInterval(() => {
       setTypedPlaceholder(fullPlaceholder.slice(0, index + 1));
@@ -22,16 +43,49 @@ export const ChatInterface = () => {
     return () => clearInterval(interval);
   }, [fullPlaceholder]);
 
-  const handleSend = () => {
+  useEffect(() => {
+    // Scroll to bottom when messages change
+    scrollToBottom();
+  }, [messages]);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  const handleSend = async () => {
     if (!user) {
       setIsAuthModalOpen(true);
+      setAuthMode('login');
       return;
     }
 
     if (input.trim()) {
-      setMessages([...messages, { text: input, isUser: true }]);
+      const userMessage = { text: input, isUser: true };
+      setMessages(prev => [...prev, userMessage]);
       setInput("");
-      // Add AI response logic here
+      setIsLoading(true);
+
+      try {
+        // Send message to API
+        const response = await axios.post('/api/chat/message', {
+          message: input
+        });
+        
+        // Add AI response to messages
+        setMessages(prev => [...prev, { 
+          text: response.data.reply, 
+          isUser: false 
+        }]);
+      } catch (error) {
+        console.error('Error sending message:', error);
+        // Add error message
+        setMessages(prev => [...prev, { 
+          text: "Sorry, I'm having trouble connecting right now. Please try again later.", 
+          isUser: false 
+        }]);
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -39,7 +93,7 @@ export const ChatInterface = () => {
     <div className="flex flex-col items-center justify-center h-full space-y-4 text-gray-400">
       <Lock className="w-12 h-12 text-violet-500" />
       <p>Please sign in to start chatting with your AI trading assistant</p>
-      <div className="flex gap-4"> {/* ✅ Wrapped buttons inside a div for proper layout */}
+      <div className="flex gap-4">
         <Button
           onClick={() => { 
             setAuthMode("login"); 
@@ -79,24 +133,38 @@ export const ChatInterface = () => {
           ) : messages.length === 0 ? (
             <EmptyState />
           ) : (
-            messages.map((msg, index) => (
-              <div
-                key={index}
-                className={`flex ${msg.isUser ? "justify-end" : "justify-start"}`}
-              >
+            <>
+              {messages.map((msg, index) => (
                 <div
-                  className={`max-w-[80%] p-4 rounded-2xl ${
-                    msg.isUser
-                      ? "bg-gradient-to-r from-blue-500/20 to-violet-500/20 backdrop-blur-sm border border-white/10"
-                      : "bg-white/5 backdrop-blur-sm"
-                  }`}
+                  key={index}
+                  className={`flex ${msg.isUser ? "justify-end" : "justify-start"}`}
                 >
-                  <p className={`text-${msg.isUser ? "white" : "gray-200"}`}>
-                    {msg.text}
-                  </p>
+                  <div
+                    className={`max-w-[80%] p-4 rounded-2xl ${
+                      msg.isUser
+                        ? "bg-gradient-to-r from-blue-500/20 to-violet-500/20 backdrop-blur-sm border border-white/10"
+                        : "bg-white/5 backdrop-blur-sm"
+                    }`}
+                  >
+                    <p className={`text-${msg.isUser ? "white" : "gray-200"}`}>
+                      {msg.text}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            ))
+              ))}
+              {isLoading && (
+                <div className="flex justify-start">
+                  <div className="max-w-[80%] p-4 rounded-2xl bg-white/5 backdrop-blur-sm">
+                    <div className="flex space-x-2">
+                      <div className="w-2 h-2 rounded-full bg-gray-400 animate-bounce"></div>
+                      <div className="w-2 h-2 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                      <div className="w-2 h-2 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+                    </div>
+                  </div>
+                </div>
+              )}
+              <div ref={messagesEndRef} />
+            </>
           )}
         </div>
 
@@ -107,14 +175,14 @@ export const ChatInterface = () => {
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleSend()}
+              onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}
               placeholder={typedPlaceholder}
-              disabled={!user}
+              disabled={!user || isLoading}
               className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-violet-500/50 text-white placeholder-gray-400 disabled:opacity-50 disabled:cursor-not-allowed"
             />
             <button
               onClick={handleSend}
-              disabled={!user}
+              disabled={!user || isLoading || !input.trim()}
               className="p-3 rounded-xl bg-gradient-to-r from-blue-500 to-violet-500 hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Send className="w-5 h-5 text-white" />
