@@ -8,7 +8,7 @@ import { generateOTP } from '../utils/generateOTP.js';
 import { sendOTPEmail } from '../services/emailService.js';
 import { authenticate } from '../middlewares/auth.js';
 
-// Register user (using /signup to match the frontend)
+// SignUp
 router.post('/signup', async (req, res) => {
     try {
         const { username, email, password } = req.body;
@@ -121,11 +121,19 @@ router.post('/resend-otp', async (req, res) => {
     }
 });
 
-// Login
+// Signin
 router.post('/signin', async (req, res) => {
     try {
         const { username, password } = req.body;
-
+        
+        // Validate input
+        if (!username || !password) {
+            return res.status(400).json({ 
+              success: false, 
+              message: 'Username/email and password are required' 
+            });
+          }
+          
         // Check if username is actually an email
         const isEmail = username.includes('@');
         

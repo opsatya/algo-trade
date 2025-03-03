@@ -26,7 +26,7 @@ export const AuthProvider = ({ children }) => {
           axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
           
           // Verify token and get user data - using /me endpoint instead of /verify
-          const response = await axios.get('/auth/me');
+          const response = await axios.get('/api/auth/me');
           setUser(response.data.user);
         }
       } catch (error) {
@@ -72,6 +72,15 @@ export const AuthProvider = ({ children }) => {
   // Signup function
   const signup = async (userData) => {
     try {
+      // Make sure all fields are present
+      const { username, email, password } = userData;
+      if (!username || !email || !password) {
+        return {
+          success: false,
+          message: 'All fields are required'
+        };
+      }
+      
       const response = await axios.post('/api/auth/signup', userData);
       return {
         success: true,
@@ -110,7 +119,7 @@ export const AuthProvider = ({ children }) => {
   const logout = async () => {
     try {
       // Call the backend logout endpoint to clear the cookie
-      await axios.post('/auth/logout');
+      await axios.post('/api/auth/logout');
       
       // Remove token from localStorage if you're using it
       localStorage.removeItem('token');
